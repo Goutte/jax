@@ -1,5 +1,6 @@
 require 'rails'
 require 'jquery/rails'
+require 'gl-matrix-rails'
 require 'jax/engine'
 
 module Jax
