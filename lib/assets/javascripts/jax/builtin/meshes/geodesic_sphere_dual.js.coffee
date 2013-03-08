@@ -212,10 +212,10 @@ class Jax.Mesh.GeodesicSphereDual extends Jax.Mesh.GeodesicSphere
 
       if isIn(vertex, icosahedronVertices)
         n = 5
-        @pentagons.push(new Jax.SubMesh.Pentagon(currentVertexBufferIndex)) # @dontmerge trying untested stuff
+        @pentagons.push(new Jax.SubMesh.Pentagon(vertices, currentVertexBufferIndex))
       else
         n = 6
-        @hexagons.push(new Jax.SubMesh.Hexagon(currentVertexBufferIndex)) # @dontmerge trying untested stuff
+        @hexagons.push(new Jax.SubMesh.Hexagon(vertices, currentVertexBufferIndex))
 
       closestVertices = getClosestVertices vertex, centerVertices, n
 
