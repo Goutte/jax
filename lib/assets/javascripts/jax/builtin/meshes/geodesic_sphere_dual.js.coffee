@@ -1,5 +1,87 @@
 
 ###
+
+An attempt at refactorization of submesh editing
+
+tothink
+* extend Jax.SubMesh.Base ?
+* topmost level : use or extend Jax.Geometry.Pentagon and pipe here to vertexBuffer ?
+* methods should work gracefully with slightly imperfect polygons. With all, in fact.
+* need to be ultra light, opt-in
+* is a full 5 trianglefan with no overlap
+* should we parameterize a @pointer to vertexBuffer ? It's only a pointer, yet... +2 for git branch Benchmark
+* look harder at trianglefan & trianglestripes (which incidentally is in webgl)
+
+
+###
+class Jax.SubMesh.Pentagon
+
+  # this will be moved to common parent of pentagon and hexagon submeshes
+  _trianglesCount: 5 # pentagon has 5 triangles
+
+  #
+  constructor: (vertexBuffer, vertexBufferIndex) ->
+    @vertexBuffer = vertexBuffer || []
+    @vertexBufferIndex = vertexBufferIndex || 0
+
+  setVertexBufferIndex: (vertexBufferIndex) ->
+    @vertexBufferIndex = vertexBufferIndex
+
+  # normal vector of the nth triangle
+  getTriangleNormal: (nth) ->
+    j = @vertexBufferIndex + nth * 9
+    vA = vec3.createFrom @vertexBuffer[j  ], @vertexBuffer[j+1], @vertexBuffer[j+2]
+    vB = vec3.createFrom @vertexBuffer[j+3], @vertexBuffer[j+4], @vertexBuffer[j+5]
+    vC = vec3.createFrom @vertexBuffer[j+6], @vertexBuffer[j+7], @vertexBuffer[j+8]
+    vAB = vec3.subtract vB, vA, []
+    vAC = vec3.subtract vC, vA, []
+
+    vec3.normalize( vec3.cross vAB, vAC, [] )
+
+  # median normal of the faces
+  getNormal: () ->
+    normal = [0,0,0]
+    for i in [0...@_trianglesCount] by 1
+      vec3.add(normal, @getTriangleNormal(i))
+
+    vec3.normalize(normal)
+
+
+class Jax.SubMesh.Hexagon
+
+  # this will be moved to common parent of pentagon and hexagon submeshes
+  _trianglesCount: 6 # hexagon has 6 triangles
+
+  #
+  constructor: (vertexBuffer, vertexBufferIndex) ->
+    @vertexBuffer = vertexBuffer || []
+    @vertexBufferIndex = vertexBufferIndex || 0
+
+  setVertexBufferIndex: (vertexBufferIndex) ->
+    @vertexBufferIndex = vertexBufferIndex
+
+  # normal vector of the nth triangle
+  getTriangleNormal: (nth) ->
+    j = @vertexBufferIndex + nth * 9
+    vA = vec3.createFrom @vertexBuffer[j  ], @vertexBuffer[j+1], @vertexBuffer[j+2]
+    vB = vec3.createFrom @vertexBuffer[j+3], @vertexBuffer[j+4], @vertexBuffer[j+5]
+    vC = vec3.createFrom @vertexBuffer[j+6], @vertexBuffer[j+7], @vertexBuffer[j+8]
+    vAB = vec3.subtract vB, vA, []
+    vAC = vec3.subtract vC, vA, []
+
+    vec3.normalize( vec3.cross vAB, vAC, [] )
+
+  # median normal of the faces
+  getNormal: () ->
+    normal = [0,0,0]
+    for i in [0...@_trianglesCount] by 1
+      vec3.add(normal, @getTriangleNormal(i))
+
+    vec3.normalize(normal)
+
+
+
+###
 A Geodesic Sphere Dual mesh
 Its faces are 12 pentagons and the rest are hexagons.
 Of course, these are made of respectively 5 and 6 triangles,
@@ -128,8 +210,10 @@ class Jax.Mesh.GeodesicSphereDual extends Jax.Mesh.GeodesicSphere
 
       if isIn(vertex, icosahedronVertices)
         n = 5
+        @pentagons.push(new Jax.SubMesh.Pentagon(currentVertexBufferIndex)) # @dontmerge trying untested stuff
       else
         n = 6
+        @hexagons.push(new Jax.SubMesh.Hexagon(currentVertexBufferIndex)) # @dontmerge trying untested stuff
 
       closestVertices = getClosestVertices vertex, centerVertices, n
 
