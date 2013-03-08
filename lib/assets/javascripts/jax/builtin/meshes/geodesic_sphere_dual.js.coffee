@@ -1,3 +1,5 @@
+Jax.SubMesh = Jax.SubMesh || {}
+
 
 ###
 
