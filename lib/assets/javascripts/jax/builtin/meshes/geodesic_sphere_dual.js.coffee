@@ -40,6 +40,14 @@ class Jax.SubMesh.Pentagon
 
     vec3.normalize( vec3.cross vAB, vAC, [] )
 
+  getCenter: (dest = [0,0,0]) ->
+    j = @vertexBufferIndex
+    dest[0] = @vertexBuffer[j  ]
+    dest[1] = @vertexBuffer[j+1]
+    dest[2] = @vertexBuffer[j+2]
+
+    dest
+
   # median normal of the faces
   getNormal: () ->
     normal = [0,0,0]
@@ -72,6 +80,14 @@ class Jax.SubMesh.Hexagon
     vAC = vec3.subtract vC, vA, []
 
     vec3.normalize( vec3.cross vAB, vAC, [] )
+
+  getCenter: (dest = [0,0,0]) ->
+    j = @vertexBufferIndex
+    dest[0] = @vertexBuffer[j  ]
+    dest[1] = @vertexBuffer[j+1]
+    dest[2] = @vertexBuffer[j+2]
+
+    dest
 
   # median normal of the faces
   getNormal: () ->
