@@ -33,7 +33,7 @@ Jax.Controller.create "geodes",
 
     @stats = @world.addObject new Jax.Framerate # this is not showing anything but a black square
 
-    @context.activeCamera.position = [0, 3, 13]
+    @context.activeCamera.position = [0, 2, 15]
     @context.activeCamera.lookAt [0, 1.5, 0]
 
 

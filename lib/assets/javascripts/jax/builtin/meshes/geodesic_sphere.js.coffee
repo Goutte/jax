@@ -1,5 +1,11 @@
 ###
-A Geodesic Sphere mesh, which is the fractalization of an icosahedron
+A Geodesic Sphere mesh, which is the fractalization of an Icosahedron.
+Each face is subdivided into 4 equilateral triangles (triforce-style),
+whose altitudes are adjusted to fill the bounding sphere.
+Rinse and repeat, at will. Well, it scales something like O(4^n), so don't get too excited.
+
+Pseudo-random thoughts:
+Jasmine & git checkout => benchmark branches against each other using any spec file(s) <= would be awesome
 
 Options:
 
@@ -66,17 +72,13 @@ class Jax.Mesh.GeodesicSphere extends Jax.Mesh.Triangles
     @size = 1
     @subdivisions = 0
     if options.subdivisions > 5 then console.warn "Geode subdivided > 5 times is NOT supported ATM. Use at your own risk !"
-    if options.icosahedron then options.icosahedron = Jax.Util.merge(options.icosahedron, @icosahedron)
+    #if options.icosahedron then options.icosahedron = Jax.Util.merge options.icosahedron, @icosahedron #
+
     super options
 
   init: (vertices, colors, textureCoords, vertexNormals, vertexIndices, tangents, bitangents) ->
 
     size = @size
-
-    # Benchmarking
-    # Jasmine + git checkout => benchmark branches using any spec file
-    # tests :
-    # icosahedron = @icosahedron
 
     # Helpers
 
@@ -118,9 +120,9 @@ class Jax.Mesh.GeodesicSphere extends Jax.Mesh.Triangles
         midAB = vec3.create();
         midBC = vec3.create();
         midCA = vec3.create();
-        vec3.scale(midAB, vec3.add(midAB, uvA, uvB), 1/2 )
-        vec3.scale(midBC, vec3.add(midBC, uvB, uvC), 1/2 )
-        vec3.scale(midCA, vec3.add(midCA, uvC, uvA), 1/2 )
+        vec3.scale(midAB, vec3.add(midAB, uvA, uvB), 1/2)
+        vec3.scale(midBC, vec3.add(midBC, uvB, uvC), 1/2)
+        vec3.scale(midCA, vec3.add(midCA, uvC, uvA), 1/2)
 
         recursiveInitUV uvA, midAB, midCA, detail # top
         recursiveInitUV midAB, uvB, midBC, detail # left
