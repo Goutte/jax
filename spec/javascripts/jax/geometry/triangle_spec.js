@@ -126,6 +126,24 @@ describe("Jax.Geometry.Triangle", function() {
           // it intersects at [0,0,0], where distance from [0,0,-1] is 1
           expect(cp).toEqualVector([0,0,0,1]);
         });
+
+        it("intersects, really !", function() {
+          var O = [-2.292581796646118,4.323019981384277,0.2531062364578247];
+          var D = [87.64959931373596,-179.22711849212646,-14.543558239936829];
+          var cp = [];
+          var segmax = 2;
+
+
+          tri = new Jax.Geometry.Triangle(
+            [0.8918825990009426, -1.4430963501832057, 0],
+            [0.9851379487720126, -1.3854613750982998, 0],
+            [0.9207000729837292, -1.425286172650799, 0.10426265706470124]
+          );
+
+          expect(tri.intersectRay(O, D, cp)).toBeTruthy();
+          // it intersects at [0,0,0], where distance from [0,0,-1] is 1
+//          expect(cp).toEqualVector([0,0,0,1]);
+        });
       
         it("no intersect", function() {
           var O = [1,0,0];
