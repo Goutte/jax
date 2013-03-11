@@ -11,7 +11,7 @@ class Jax.Mesh.Cone extends Jax.Mesh.TriangleFan
   init: (vertices, colors, textures, normals) ->
     vertices.push 0, @height / 2, 0
     textures.push 0, 0
-    delta = Math.PI * 2 / @sides
+    delta = Math.TAU / @sides
     
     for side in [0..-@sides]
       x = Math.cos(side * delta)

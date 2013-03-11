@@ -28,8 +28,8 @@ class Jax.Mesh.Torus extends Jax.Mesh.TriangleStrip
     sides = @sides
     rings = @rings
     
-    sidedelta = 2 * Math.PI / sides
-    ringdelta = 2 * Math.PI / rings
+    sidedelta = Math.TAU / sides
+    ringdelta = Math.TAU / rings
     theta = sintheta = 0
     costheta = 1
     

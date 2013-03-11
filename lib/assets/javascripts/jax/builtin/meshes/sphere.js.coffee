@@ -37,7 +37,7 @@ class Jax.Mesh.Sphere extends Jax.Mesh.TriangleStrip
       # full range [0..1], resulting in ugly UV errors.
       for slice in [0..slices]
         theta = stack * Math.PI / stacks
-        phi = slice * 2 * Math.PI / slices
+        phi = slice * Math.TAU / slices
         sinth = Math.sin theta
         sinph = Math.sin phi
         costh = Math.cos theta

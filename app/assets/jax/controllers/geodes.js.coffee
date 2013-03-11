@@ -33,7 +33,7 @@ Jax.Controller.create "geodes",
 
     @stats = @world.addObject new Jax.Framerate # this is not showing anything but a black square
 
-    @context.activeCamera.position = [0, 3, 13]
+    @context.activeCamera.position = [0, 2, 15]
     @context.activeCamera.lookAt [0, 1.5, 0]
 
 
@@ -59,7 +59,7 @@ Jax.Controller.create "geodes",
           @camera.rotate timechange * (0.03 + 0.85 / Math.pow(2,@mesh.subdivisions+1) ), 1, 0.75, 0.5
 
 
-    for n in [0..3] by 1
+    for n in [0..2] by 1
 
       # Pulsating Geodes Duals
       geode = @world.addObject new Jax.Model
@@ -72,10 +72,10 @@ Jax.Controller.create "geodes",
           @stellation = @stellation || 0 # not rly, but what else then ?
           buff = @mesh.data.vertexBuffer # look into using Mesh#vertices
           for i in [0...buff.length] by 9
-            o = vec3.createFrom(buff[i],buff[i+1],buff[i+2])
+            o = vec3.fromValues(buff[i],buff[i+1],buff[i+2])
 
             @stellation = (@stellation + timechange * (Math.TAU / 6180) ) % Math.TAU
-            vec3.scale(vec3.normalize(o), @mesh.size * (Math.cos(@stellation)+1))
+            vec3.scale(o, vec3.normalize(o, o), @mesh.size * (Math.cos(@stellation)+1))
 
             buff[i  ] = o[0]
             buff[i+1] = o[1]
