@@ -19,14 +19,14 @@ Example:
 ###
 class Jax.Mesh.GeodesicSphere extends Jax.Mesh.Triangles
 
-  g = ( 1 + Math.sqrt( 5 ) ) / 2 # golden ratio ~= 1.61803398875
+  gol = ( 1 + Math.sqrt( 5 ) ) / 2 # golden ratio ~= 1.61803398875
 
   # This is the resource @icosahedron => move to resource ? Used by child classes too !
   icosahedron: {
     vertices : [
-      [ -1,  g,  0 ], [  1,  g,  0 ], [ -1, -g,  0 ], [  1, -g,  0 ],
-      [  0, -1,  g ], [  0,  1,  g ], [  0, -1, -g ], [  0,  1, -g ],
-      [  g,  0, -1 ], [  g,  0,  1 ], [ -g,  0, -1 ], [ -g,  0,  1 ],
+      [ -1.0,  gol,  0.0 ], [  1.0,  gol,  0.0 ], [ -1.0, -gol,  0.0 ], [  1.0, -gol,  0.0 ],
+      [  0.0, -1.0,  gol ], [  0.0,  1.0,  gol ], [  0.0, -1.0, -gol ], [  0.0,  1.0, -gol ],
+      [  gol,  0.0, -1.0 ], [  gol,  0.0,  1.0 ], [ -gol,  0.0, -1.0 ], [ -gol,  0.0,  1.0 ],
     ],
     # faces are sorted by (arbitrary) adjacency, should be redone having the 20 and 1 adjacent too, i think it's possible
     faces : [ # storing vertices' indexes
