@@ -87,6 +87,16 @@ class Mesh
       @_submesh = submesh
       
   draw_mode: GL_POINTS
+
+  toJSON: ->
+    vertices:      (parseFloat i.toFixed(6) for i in @data.vertexBuffer)
+    colors:        (parseFloat i.toFixed(6) for i in @data.colorBuffer)
+    textureCoords: (parseFloat i.toFixed(6) for i in @data.textureCoordsBuffer)
+    normals:       (parseFloat i.toFixed(6) for i in @data.normalBuffer)
+    tangents:      (parseFloat i.toFixed(6) for i in @data.tangentBuffer)
+    bitangents:    (parseFloat i.toFixed(6) for i in @data.bitangentBuffer)
+    indices:       (           i            for i in @data.indexBuffer)
+
   
   ###
   Immediately recalculates this mesh's vertex normals.
