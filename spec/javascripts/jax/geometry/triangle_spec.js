@@ -127,22 +127,23 @@ describe("Jax.Geometry.Triangle", function() {
           expect(cp).toEqualVector([0,0,0,1]);
         });
 
-        it("intersects, really !", function() {
+        it("should accept a vec4 as cp parameter", function() {
 
-          var O = [-2.6923537254333496,-4.0920233726501465,0.1283639818429947];
-          var D = [0.5756293535232544,0.8175342082977295,0.01699063926935196];
-
+          var O = [-1.5328891277313232, 1.9750583171844482, 0.0059257312677800655];
+          var D = [0.7422370314598083, -0.6457902193069458, -0.17899484932422638];
           var cp = [];
 
-          tri = new Jax.Geometry.Triangle(
-            [-0.891882598400116,-1.443096399307251,0],
-            [-0.8164374232292175,-1.489724040031433,0.0644378662109375],
-            [-0.9207000732421875,-1.4252861738204956,0.10426265746355057]
-         );
+          var triangle = new Jax.Geometry.Triangle(
+            [-0.891882598400116,1.443096399307251,0],
+            [-0.985137939453125,1.3854613304138184,0],
+            [-0.9207000732421875,1.4252861738204956,0.10426265746355057]
+          );
 
-          expect(tri.intersectRay(O, D, cp)).toBeFalsy();
-          // it intersects at [0,0,0], where distance from [0,0,-1] is 1
-//          expect(cp).toEqualVector([0,0,0,1]);
+          expect(triangle.intersectRay(O, D, cp)).toBeFalsy(); // OK, because it does not intersect
+
+          cp = vec4.create();
+
+          expect(triangle.intersectRay(O, D, cp)).toBeFalsy(); // WAT
         });
       
         it("no intersect", function() {
