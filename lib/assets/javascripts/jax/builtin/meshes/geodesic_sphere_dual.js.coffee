@@ -1,101 +1,59 @@
+###
+
+SubMeshes are an attempt at factorization of logic of a subgroup of vertices of a Mesh
+
+###
 Jax.SubMesh = Jax.SubMesh || {}
 
-
-###
-
-An attempt at refactorization of submesh editing
-
-tothink
-* extend Jax.SubMesh.Base ?
-* topmost level : use or extend Jax.Geometry.Pentagon and pipe here to vertexBuffer ?
-* methods should work gracefully with slightly imperfect polygons. With all, in fact.
-* need to be ultra light, opt-in
-* is a full 5 trianglefan with no overlap
-* should we parameterize a @pointer to vertexBuffer ? It's only a pointer, yet... +2 for git branch Benchmark
-* look harder at trianglefan & trianglestripes (which incidentally is in webgl)
-
-
-###
-class Jax.SubMesh.Pentagon
-
-  # this will be moved to common parent of pentagon and hexagon submeshes
-  _trianglesCount: 5 # pentagon has 5 triangles
-
-  #
-  constructor: (vertexBuffer, vertexBufferIndex) ->
-    @vertexBuffer = vertexBuffer || []
-    @vertexBufferIndex = vertexBufferIndex || 0
-
-  setVertexBufferIndex: (vertexBufferIndex) ->
-    @vertexBufferIndex = vertexBufferIndex
+class Jax.SubMesh.TriangleFan
+  constructor: (@trianglesCount, @mesh, @verticesStart = 0) ->
 
   # normal vector of the nth triangle
   getTriangleNormal: (nth) ->
-    j = @vertexBufferIndex + nth * 9
-    vA = vec3.createFrom @vertexBuffer[j  ], @vertexBuffer[j+1], @vertexBuffer[j+2]
-    vB = vec3.createFrom @vertexBuffer[j+3], @vertexBuffer[j+4], @vertexBuffer[j+5]
-    vC = vec3.createFrom @vertexBuffer[j+6], @vertexBuffer[j+7], @vertexBuffer[j+8]
-    vAB = vec3.subtract vB, vA, []
-    vAC = vec3.subtract vC, vA, []
+    vertexBuffer = @mesh.vertices
+    j = @verticesStart + nth * 9
+    vA = vec3.fromValues vertexBuffer[j  ], vertexBuffer[j+1], vertexBuffer[j+2]
+    vB = vec3.fromValues vertexBuffer[j+3], vertexBuffer[j+4], vertexBuffer[j+5]
+    vC = vec3.fromValues vertexBuffer[j+6], vertexBuffer[j+7], vertexBuffer[j+8]
+    vAB = vec3.subtract vec3.create(), vB, vA
+    vAC = vec3.subtract vec3.create(), vC, vA
 
-    vec3.normalize( vec3.cross vAB, vAC, [] )
+    normal = vec3.create()
+    vec3.cross normal, vAB, vAC
 
-  getCenter: (dest = [0,0,0]) ->
-    j = @vertexBufferIndex
-    dest[0] = @vertexBuffer[j  ]
-    dest[1] = @vertexBuffer[j+1]
-    dest[2] = @vertexBuffer[j+2]
+    vec3.normalize normal, normal
 
-    dest
-
-  # median normal of the faces
-  getNormal: () ->
-    normal = [0,0,0]
-    for i in [0...@_trianglesCount] by 1
-      vec3.add(normal, @getTriangleNormal(i))
-
-    vec3.normalize(normal)
-
-
-class Jax.SubMesh.Hexagon
-
-  # this will be moved to common parent of pentagon and hexagon submeshes
-  _trianglesCount: 6 # hexagon has 6 triangles
-
-  #
-  constructor: (vertexBuffer, vertexBufferIndex) ->
-    @vertexBuffer = vertexBuffer || []
-    @vertexBufferIndex = vertexBufferIndex || 0
-
-  setVertexBufferIndex: (vertexBufferIndex) ->
-    @vertexBufferIndex = vertexBufferIndex
-
-  # normal vector of the nth triangle
-  getTriangleNormal: (nth) ->
-    j = @vertexBufferIndex + nth * 9
-    vA = vec3.createFrom @vertexBuffer[j  ], @vertexBuffer[j+1], @vertexBuffer[j+2]
-    vB = vec3.createFrom @vertexBuffer[j+3], @vertexBuffer[j+4], @vertexBuffer[j+5]
-    vC = vec3.createFrom @vertexBuffer[j+6], @vertexBuffer[j+7], @vertexBuffer[j+8]
-    vAB = vec3.subtract vB, vA, []
-    vAC = vec3.subtract vC, vA, []
-
-    vec3.normalize( vec3.cross vAB, vAC, [] )
-
-  getCenter: (dest = [0,0,0]) ->
-    j = @vertexBufferIndex
-    dest[0] = @vertexBuffer[j  ]
-    dest[1] = @vertexBuffer[j+1]
-    dest[2] = @vertexBuffer[j+2]
-
-    dest
+  # center of the polygon
+  getCenter: () ->
+    buf = @mesh.vertices
+    j = @verticesStart
+    # first vertex is center
+    vec3.fromValues buf[j], buf[j+1], buf[j+2]
 
   # median normal of the faces
   getNormal: () ->
-    normal = [0,0,0]
-    for i in [0...@_trianglesCount] by 1
-      vec3.add(normal, @getTriangleNormal(i))
+    normal = vec3.create()
+    for i in [0...@trianglesCount] by 1
+      vec3.add normal, normal, @getTriangleNormal(i)
 
-    vec3.normalize(normal)
+    vec3.normalize normal, normal
+
+
+
+class Jax.SubMesh.Pentagon extends Jax.SubMesh.TriangleFan
+
+  constructor: (@mesh, @verticesStart = 0) ->
+    super 5, @mesh, @verticesStart
+
+
+
+class Jax.SubMesh.Hexagon extends Jax.SubMesh.TriangleFan
+
+  constructor: (@mesh, @verticesStart = 0) ->
+    super 6, @mesh, @verticesStart
+
+
+
 
 
 
@@ -132,9 +90,9 @@ class Jax.Mesh.GeodesicSphereDual extends Jax.Mesh.GeodesicSphere
 
   constructor: (options = {}) ->
     if options.subdivisions > 3 then console.warn "Dual Geode subdivided > 3 times is not supported"
-    # Array of Jax.Geometry.Pentagon
+    # Array of Jax.SubMesh.Pentagon
     @pentagons = []
-    # Array of Jax.Geometry.Hexagon
+    # Array of Jax.SubMesh.Hexagon
     @hexagons = []
     super options
 
@@ -229,10 +187,10 @@ class Jax.Mesh.GeodesicSphereDual extends Jax.Mesh.GeodesicSphere
 
       if isIn(vertex, icosahedronVertices)
         n = 5
-        @pentagons.push(new Jax.SubMesh.Pentagon(vertices, currentVertexBufferIndex))
+        @pentagons.push(new Jax.SubMesh.Pentagon(this, currentVertexBufferIndex))
       else
         n = 6
-        @hexagons.push(new Jax.SubMesh.Hexagon(vertices, currentVertexBufferIndex))
+        @hexagons.push(new Jax.SubMesh.Hexagon(this, currentVertexBufferIndex))
 
       closestVertices = getClosestVertices vertex, centerVertices, n
 
