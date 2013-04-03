@@ -48,7 +48,7 @@ class Jax.World
   @define 'ambientColor',
     get: -> @_ambientColor
     set: (c) ->
-      @_ambientColor = Jax.Color.parse c
+      (@_ambientColor or= new Jax.Color).parse c
       @fireEvent 'ambientChanged'
     
   @getter 'objects', ->
@@ -192,7 +192,7 @@ class Jax.World
   addLight: (light) ->
     light = Jax.Light.find(light) unless light instanceof Jax.Light
     @lights.push light
-    @fireEvent 'lightAdded'
+    @fireEvent 'lightAdded', light
     light
     
   ###
@@ -200,7 +200,7 @@ class Jax.World
   ###
   removeLight: (light) ->
     @lights.splice @lights.indexOf(light)
-    @fireEvent 'lightRemoved'
+    @fireEvent 'lightRemoved', light
     light
 
   ###

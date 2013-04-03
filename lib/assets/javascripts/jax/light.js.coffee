@@ -6,6 +6,9 @@ Jax.SPOT_LIGHT        = 2
 Jax.DIRECTIONAL_LIGHT = 3
 
 class Jax.Light extends Jax.Model
+  __maxSpotAngle = Math.PI / 2 - Math.EPSILON
+  @getMaxSpotAngle: -> __maxSpotAngle
+
   constructor: (options) ->
     if @.__proto__.constructor.name == 'Light' # not a subclass of Light
       if options?.type
@@ -20,10 +23,12 @@ class Jax.Light extends Jax.Model
     @enabled = true
     @_color = new Jax.Light.Color
     @_attenuation = new Jax.Light.Attenuation
-    @spotExponent = 32
-    @innerSpotAngle = Math.PI / 8.75
-    @outerSpotAngle = Math.PI / 8
-    @energy = if options?.energy is undefined then 1 else options.energy
+    @innerSpotAngle = Math.PI / 4.375
+    @outerSpotAngle = Math.PI / 4
+    # FIXME should be easy to bind one function to many events
+    @attenuation.on 'constantChanged',  => @_maxEffectiveRangeCache = null
+    @attenuation.on 'linearChanged',    => @_maxEffectiveRangeCache = null
+    @attenuation.on 'quadraticChanged', => @_maxEffectiveRangeCache = null
     
     super options
     
@@ -42,14 +47,29 @@ class Jax.Light extends Jax.Model
   @define 'position',
     get: -> @camera.position
     set: (pos) -> @camera.position = pos
-    
+  
   @define 'innerSpotAngle',
     get: -> @_innerSpotAngle
-    set: (c) -> @_innerSpotAngle = c; @_innerSpotAngleCos = Math.cos c
+    set: (c) ->
+      @_innerSpotAngle = c
+      # If @_innerSpotAngle is 45 degrees, the actual, visible
+      # angle of the cone will be 45 degrees only if we divide by 2 here,
+      # because the dot product used by the shader produces the same value
+      # for both negative and positive angles (where 0 is the center of
+      # the cone).
+      @_innerSpotAngleCos = Math.cos c / 2
+      @trigger 'innerSpotAngleChanged', c
+      if @_outerSpotAngle < c
+        @outerSpotAngle = c
     
   @define 'outerSpotAngle',
     get: -> @_outerSpotAngle
-    set: (c) -> @_outerSpotAngle = c; @_outerSpotAngleCos = Math.cos c
+    set: (c) ->
+      @_outerSpotAngle = c
+      @_outerSpotAngleCos = Math.cos c / 2
+      @trigger 'outerSpotAngleChanged', c
+      if @_innerSpotAngle > c
+        @innerSpotAngle = c
 
   @define 'outerSpotAngleCos', get: -> @_outerSpotAngleCos
   @define 'innerSpotAngleCos', get: -> @_innerSpotAngleCos
@@ -86,19 +106,22 @@ class Jax.Light extends Jax.Model
 
   crMinIntensity = 10.0 / 256.0
   maxEffectiveRange: (rangeIncrement = 1.0) ->
+    return @_maxEffectiveRangeCache if @_maxEffectiveRangeCache
     attenuation = @attenuation
     
     # make sure the parameters are reasonable and that
     # the algorithm will terminate
-    if attenuation.constant < 0.0 or attenuation.linear < 0.0 or attenuation.quadratic < 0.0 or \
-       (attenuation.constant < (1 / crMinIntensity) and attenuation.linear is 0 and attenuation.quadratic is 0)
-      return -1
+    # the epsilons are important because very small values can stall the
+    # javascript
+    if attenuation.constant < Math.EPSILON or attenuation.linear < Math.EPSILON or attenuation.quadratic < Math.EPSILON or \
+       (attenuation.constant < (1 / crMinIntensity) and attenuation.linear < Math.EPSILON and attenuation.quadratic < Math.EPSILON)
+      return @_maxEffectiveRangeCache = -1
 
     distance = rangeIncrement
     while @calculateIntensity(distance) > crMinIntensity
       distance += rangeIncrement
 
-    distance
+    return @_maxEffectiveRangeCache = distance
     
   calculateIntensity: (distance) ->
     return 1.0 / (@attenuation.constant + @attenuation.linear * distance + \

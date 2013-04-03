@@ -1,12 +1,20 @@
 #= require 'jax/renderer'
 
 Jax.Renderer.register class Jax.Renderer.WebGL
+  @define 'clearColor',
+    get: -> @_clearColor
+    set: (v) ->
+      vec4.copy @_clearColor, v
+      @context.clearColor @_clearColor...
+    
   constructor: (canvas, options) ->
     throw new Error "WebGL not supported!" unless canvas.getContext
     @context = canvas.getContext 'experimental-webgl', options
     throw new Error "WebGL not supported!" unless @context
     
-    @context.clearColor 0.0, 0.0, 0.0, 1.0
+    @_clearColor or= vec4.fromValues 0, 0, 0, 0
+    
+    @clearColor = [0,0,0,0]
     @context.clearDepth 1.0
     @context.enable     GL_DEPTH_TEST
     @context.depthFunc  GL_LESS
@@ -24,6 +32,6 @@ Jax.Renderer.register class Jax.Renderer.WebGL
     @viewport()
     
   viewport: ->
-    canvasWidth  = @context.canvas.clientWidth  || @context.canvas.width
-    canvasHeight = @context.canvas.clientHeight || @context.canvas.height
+    canvasWidth  = @context.canvas.width
+    canvasHeight = @context.canvas.height
     @context.viewport 0, 0, canvasWidth, canvasHeight

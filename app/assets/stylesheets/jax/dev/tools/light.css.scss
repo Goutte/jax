@@ -1,0 +1,76 @@
+#tools {
+  .light {
+    overflow: hidden;
+
+    .basic {
+      white-space: nowrap;
+
+      .header {
+        vertical-align: top;
+      }
+
+      .booleans {
+        display: inline-block;
+        font-size: 10px;
+        text-align: left;
+
+        fieldset {
+          display: inline;
+          margin: 0;
+          padding: 0;
+
+          label {
+            width: auto;
+          }
+        }
+      }
+    }
+
+    #spot-angles {
+      fieldset {
+        input.spot-angle {
+          width: 85px;
+          border-width: 1px;
+          margin-right: 1px;
+        }
+
+        label {
+          &.spot-header {
+            font-size: 8px;
+            width: 85px;
+            margin-right: 2px;
+            text-align: center;
+          }
+        }
+
+        #slider {
+          width: 180px;
+        }
+      }
+    }
+
+    .section.header {
+      color: #ccc;
+      font-weight: 800;
+      text-transform: none;
+    }
+
+    fieldset {
+      margin-left: 12px;
+
+      input.attenuation-dec {
+        width: 80px;
+      }
+    }
+
+    fieldset.attenuation {
+      label {
+        margin-top: 4px;
+      }
+
+      div {
+        vertical-align: top;
+      }
+    }
+  }
+}
