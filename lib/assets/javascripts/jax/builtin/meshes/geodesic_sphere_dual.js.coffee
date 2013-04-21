@@ -1,6 +1,7 @@
 ###
 
 SubMeshes are an attempt at factorization of logic of a subgroup of vertices of a Mesh
+Tiling !
 
 ###
 Jax.SubMesh = Jax.SubMesh || {}
@@ -25,10 +26,10 @@ class Jax.SubMesh.TriangleFan
 
   # center of the polygon
   getCenter: () ->
-    buf = @mesh.vertices
+    vertexBuffer = @mesh.vertices
     j = @verticesStart
     # first vertex is center
-    vec3.fromValues buf[j], buf[j+1], buf[j+2]
+    vec3.fromValues vertexBuffer[j], vertexBuffer[j+1], vertexBuffer[j+2]
 
   # median normal of the faces
   getNormal: () ->
