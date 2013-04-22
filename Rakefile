@@ -10,6 +10,10 @@ rescue LoadError
   exit
 end
 
+Dir[File.expand_path('tasks/support/**/*.rb', File.dirname(__FILE__))].each do |f|
+  require f
+end
+
 Dir[File.expand_path('tasks/**/*.rake', File.dirname(__FILE__))].each do |task|
   load task
 end
@@ -22,5 +26,5 @@ desc 'Generate guides (for authors), use ONLY=foo to process just "foo.textile"'
 task :guides => 'guides:generate'
 
 # disabled node tests for now, since Jax.DataRegion and friends break it. Rake jasmine:ci instead.
-task :default => ['spec', 'cucumber', 'travis', 'guides']
+task :default => ['spec', 'travis', 'guides']
 # task :release => 'guides:publish'
