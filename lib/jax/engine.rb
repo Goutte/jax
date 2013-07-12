@@ -1,5 +1,6 @@
 require 'rails'
 require 'jasmine-rails'
+require 'jasmine-headless-webkit'
 
 # this appears to be necessary for rbx, jruby, ruby1.8 -- but it may be a bug in rails
 # so possibly could be removed in later versions.
