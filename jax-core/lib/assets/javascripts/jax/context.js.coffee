@@ -38,16 +38,16 @@ class Jax.Context
           ApplicationController.prototype.error
         result = ApplicationController.prototype.error.apply \
           (@controller || new ApplicationController()), arguments
-          
+
       if result is true
         # non-fatal, restart rendering and updating
         @restart()
         error.preventDefault?()
-        true
+        false
       else
         @stopRendering()
         @stopUpdating()
-        false
+        true
     
     @_renderFunc = (time) =>
       # deal with time in seconds, not ms
