@@ -366,7 +366,7 @@ describe 'Jax.Context', ->
         mouse_released: (e) ->
         mouse_moved: (e) ->
         mouse_dragged: (e) ->
-        mouse_rolled: (e) ->
+        mouse_scrolled: (e) ->
         mouse_entered: (e) ->
         mouse_exited: (e) ->
         mouse_over: (e) ->
@@ -380,3 +380,20 @@ describe 'Jax.Context', ->
         
       it "should remove all event listeners from its canvas", ->
         expect($(@context.canvas).data("events")).toBeUndefined()
+
+
+  describe "at a second controller", ->
+    _clicked = false
+    beforeEach ->
+      _clicked = false
+      Jax.Controller.create 'test_first', {}
+      Jax.Controller.create 'test_second',
+        mouse_clicked: (e) ->
+          _clicked = true
+
+      @context.redirectTo 'test_first'
+      @context.redirectTo 'test_second'
+
+    it "should dispatch events properly", ->
+      @context.mouse.trigger 'click'
+      expect(_clicked).toBe(true)
