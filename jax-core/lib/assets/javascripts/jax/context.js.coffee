@@ -43,11 +43,11 @@ class Jax.Context
         # non-fatal, restart rendering and updating
         @restart()
         error.preventDefault?()
-        false
+        true
       else
         @stopRendering()
         @stopUpdating()
-        true
+        false
     
     @_renderFunc = (time) =>
       # deal with time in seconds, not ms
