@@ -20,15 +20,17 @@ var Jax = {
   /**
    * Global
    * Objects and functions defined here are available in the global scope.
+   * FIXME : STOP LOOKING AT ME LIKE THIS ! It was lunchtime hours ago !
    **/
   getGlobal: function() {
-    var g;
-    if (typeof(global) != 'undefined') g = global;
-    else g = window;
-
-    Jax.getGlobal = function() { return g; };
-    return Jax.getGlobal();
+    return window;
   },
+
+  // remove getGlobal ? issue of Jax's scoping
+  // gsetScope() ?
+  // also getGlobal(with_scope_set) ??
+  //       -> global() no
+
   
   /**
    * Jax.reraise(old_error, new_error) -> error
