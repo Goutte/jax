@@ -14,24 +14,29 @@
  **/
 var Jax = {
   PRODUCTION: 1,
-  
+
   webgl_not_supported_path: null,
-  
+
   /**
    * Global
-   * Objects and functions defined here are available in the global scope.
-   * FIXME : STOP LOOKING AT ME LIKE THIS ! It was lunchtime hours ago !
+   * Objects and functions defined here are available in the global scope
+   * defined for Jax, defaulting to `window` ?
+   *
+   * Note : Node-webkit has `global` defined, and then reads from `window`
+   *        the `gl_enums` from what I gather.
+   *
+   * How to keep being able to scope Jax ?
+   * Jax.getGlobal(), setGlobal(scope) ?
+   * Jax.getScope(), setScope(global) ? <- if jax had multiple scopes ?
+   *
+   *
+   * FIXME : STOP LOOKING AT ME LIKE THIS ! see above
    **/
   getGlobal: function() {
     return window;
   },
 
-  // remove getGlobal ? issue of Jax's scoping
-  // gsetScope() ?
-  // also getGlobal(with_scope_set) ??
-  //       -> global() no
 
-  
   /**
    * Jax.reraise(old_error, new_error) -> error
    * - old_error (Error): the original exception that was raised
