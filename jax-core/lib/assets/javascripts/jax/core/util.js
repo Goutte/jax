@@ -8,6 +8,51 @@
  * Contains general-purpose utility and helper functions
  **/
 Jax.Util = {
+  crc: function(s/*, polynomial = 0x04C11DB7, initialValue = 0xFFFFFFFF, finalXORValue = 0xFFFFFFFF*/) {
+    s = String(s);
+    var polynomial = arguments.length < 2 ? 0x04C11DB7 : arguments[1],
+        initialValue = arguments.length < 3 ? 0xFFFFFFFF : arguments[2],
+        finalXORValue = arguments.length < 4 ? 0xFFFFFFFF : arguments[3],
+        crc = initialValue,
+        table = [], i, j, c;
+   
+    function reverse(x, n) {
+      var b = 0;
+      while (n) {
+        b = b * 2 + x % 2;
+        x /= 2;
+        x -= x % 1;
+        n--;
+      }
+      return b;
+    }
+   
+    for (i = 255; i >= 0; i--) {
+      c = reverse(i, 32);
+   
+      for (j = 0; j < 8; j++) {
+        c = ((c * 2) ^ (((c >>> 31) % 2) * polynomial)) >>> 0;
+      }
+   
+      table[i] = reverse(c, 32);
+    }
+   
+    for (i = 0; i < s.length; i++) {
+      c = s.charCodeAt(i);
+      if (c > 255) {
+        throw new RangeError();
+      }
+      j = (crc % 256) ^ c;
+      crc = ((crc / 256) ^ table[j]) >>> 0;
+    }
+   
+    return (crc ^ finalXORValue) >>> 0;
+  },
+
+  isPowerOfTwo: function(s) {
+    return s && (s & -s) == s;
+  },
+
   findMaterial: function(name_or_instance) {
     if (typeof(name_or_instance) == "string")
       return Jax.Material.find(name_or_instance);
@@ -164,6 +209,9 @@ Jax.Util = {
     if (data) {
       var res = vec4.create();
 
+      if (data instanceof Jax.Color) {
+        return vec4.copy(res, data.toVec4());
+      }
       if (typeof(data) == "string") {
         var components = data.split(/[,\s]+/);
         if (components.length >= 3) {
@@ -220,27 +268,7 @@ Jax.Util = {
    **/
   merge: function(src, dst) {
     if (!src) return dst;
-    var i, j, n;
-
-    function doComparison(i) {
-      if (src[i] == null) dst[i] = null;
-      else if (src[i].klass)           dst[i] = src[i];
-      else if (Object.isArray(src[i])) Jax.Util.merge(src[i], dst[i] = dst[i] || []);
-      else if (typeof(src[i]) == "object") {
-        if (Object.isArray(dst[i])) {
-          n = {};
-          for (j = 0; j < dst[i].length; j++) n[j] = dst[i][j];
-          dst[i] = n;
-        }
-        Jax.Util.merge(src[i], dst[i] = dst[i] || new (function MergedObject() { })());
-      }
-      else dst[i] = src[i];
-    }
-    
-    if (Object.isArray(src)) for (i = 0; i < src.length; i++) doComparison(i);
-    else for (i in src) doComparison(i);
-
-    return dst;
+    return jQuery.extend(true, dst, src);
   },
 
   /**
@@ -282,21 +310,6 @@ Jax.Util = {
     return results;
   },
   
-  /**
-   * Jax.Util.normalizeOptions(incoming, defaults) -> Object
-   * Receives incoming and formats it into a generic Object with a structure representing the given defaults.
-   * The returned object is always a brand-new object, to avoid polluting original incoming object.
-   * If the object contains a Jax.Class instance, that actual object is copied over. All other objects
-   * are cloned into brand-new objects.
-   **/
-  normalizeOptions: function(incoming, defaults) {
-    // throw new Error("Jax.Util.normalizeOptions is being phased out of core (with "+JSON.stringify(incoming)+" and "+JSON.stringify(defaults)+")");
-    var result = new (function NormalizedObject() { })();
-    Jax.Util.merge(defaults, result);
-    Jax.Util.merge(incoming, result);
-    return result;
-  },
-
   /**
    * Jax.Util.sizeofFormat(glEnum) -> Number
    * 
@@ -340,44 +353,5 @@ Jax.Util = {
         return i;
     }
     return "(unrecognized enum: "+glEnum+" [0x"+parseInt(glEnum).toString(16)+"])";
-  },
-
-  /**
-   * Jax.Util.addRequestedHelpers(obj) -> Array
-   * - obj (Jax.Class): An instance of a class into which to mix the helpers.
-   *
-   * First, if +ApplicationHelper+ is defined, it is automatically mixed into the specified class.
-   *
-   * Then, the object is searched for a #helpers method; if it exists, it is expected to return an array of
-   * Helpers (created with +Jax.Helper.create({...})+ ). Each element in the array returned by #helpers is
-   * then mixed into the class.
-   *
-   * An array of all helpers that were just mixed into the target class is returned.
-   *
-   * As of Jax v1.1.0, you may also set the array of helpers directly on the +helpers+ property
-   * of a class, instead of defining a function.
-   **/
-  addRequestedHelpers: function(obj) {
-    var helpers = [], prop;
-    if (typeof(ApplicationHelper) != "undefined") {
-      helpers.push(ApplicationHelper);
-      for (prop in ApplicationHelper)
-        if (!obj.hasOwnProperty(prop))
-          obj[prop] = ApplicationHelper[prop];
-    }
-    if (obj.helpers) {
-      var helper_array;
-      if (typeof(obj.helpers) == "function")
-        helper_array = obj.helpers();
-      else helper_array = obj.helpers;
-      
-      for (var i = 0; i < helper_array.length; i++) {
-        helpers.push(helper_array[i]);
-        for (prop in helper_array[i])
-          if (!obj.hasOwnProperty(prop))
-            obj[prop] = helper_array[i][prop];
-      }
-    }
-    return helpers;
   }
 };

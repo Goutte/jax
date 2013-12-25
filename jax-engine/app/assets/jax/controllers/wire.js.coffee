@@ -1,5 +1,7 @@
 # Attempts to implement single-pass wire frame (http://cgg-journal.com/2008-2/06/index.html) in WebGL.
-Jax.Controller.create "wire",
+class Wire extends Jax.Controller
+  Jax.controllers.add @name, this
+
   index: ->
     tpmesh = new Jax.Mesh.Teapot
       material: new Jax.Material.Wire
@@ -24,4 +26,4 @@ Jax.Controller.create "wire",
     @world.addObject new Jax.Model 
       position: [0, 0, -3]
       mesh: tpmesh
-      update: (tc) -> @camera.rotate tc * 0.25, 1, 0.75, 0.5
+      update: (tc) -> @camera.rotate tc * 0.25, [1, 0.75, 0.5]

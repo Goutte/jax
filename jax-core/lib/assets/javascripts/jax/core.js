@@ -14,9 +14,13 @@
  **/
 var Jax = {
   PRODUCTION: 1,
-
+  
   webgl_not_supported_path: null,
 
+  Mixins: {},
+
+  shaderTemplates: {},
+  
   /**
    * Global
    * Objects and functions defined here are available in the global scope
@@ -34,9 +38,14 @@ var Jax = {
    **/
   getGlobal: function() {
     return window;
+//    var g;
+//    if (typeof(global) != 'undefined') g = global;
+//    else g = window;
+//    
+//    Jax.getGlobal = function() { return g; };
+//    return Jax.getGlobal();
   },
-
-
+  
   /**
    * Jax.reraise(old_error, new_error) -> error
    * - old_error (Error): the original exception that was raised

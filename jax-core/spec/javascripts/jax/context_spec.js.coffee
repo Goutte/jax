@@ -4,33 +4,35 @@ describe 'Jax.Context', ->
     jasmine.Clock.useMock()
   afterEach -> Jax.useRequestAnimFrame = true
 
-  describe 'after pixel width changes', ->
-    beforeEach ->
-      @context.canvas.width = 1
+  # not sure this actually should be the case
 
-    describe 'rendering', ->
-      beforeEach ->
-        spyOn @context, 'setupCamera'
-        @context.render()
+  # describe 'after pixel width changes', ->
+  #   beforeEach ->
+  #     @context.canvas.width = 1
 
-      it 'should set up the camera again', ->
-        expect(@context.setupCamera).toHaveBeenCalled()
+  #   describe 'rendering', ->
+  #     beforeEach ->
+  #       spyOn @context, 'setupCamera'
+  #       @context.render()
 
-  describe 'after pixel height changes', ->
-    beforeEach ->
-      @context.canvas.height = 1
+  #     it 'should set up the camera again', ->
+  #       expect(@context.setupCamera).toHaveBeenCalled()
 
-    describe 'rendering', ->
-      beforeEach ->
-        spyOn @context, 'setupCamera'
-        @context.render()
+  # describe 'after pixel height changes', ->
+  #   beforeEach ->
+  #     @context.canvas.height = 1
 
-      it 'should set up the camera again', ->
-        expect(@context.setupCamera).toHaveBeenCalled()
+  #   describe 'rendering', ->
+  #     beforeEach ->
+  #       spyOn @context, 'setupCamera'
+  #       @context.render()
+
+  #     it 'should set up the camera again', ->
+  #       expect(@context.setupCamera).toHaveBeenCalled()
 
   describe 'after clientWidth changes', ->
     beforeEach ->
-      @context.canvas.clientWidth = 1
+      $(@context.canvas).css('width', '1px')
 
     describe 'rendering', ->
       beforeEach ->
@@ -42,7 +44,7 @@ describe 'Jax.Context', ->
 
   describe 'after clientHeight changes', ->
     beforeEach ->
-      @context.canvas.clientHeight = 1
+      $(@context.canvas).css('height', '1px')
 
     describe 'rendering', ->
       beforeEach ->
@@ -84,12 +86,14 @@ describe 'Jax.Context', ->
       clicked = indexed = false
       div = document.createElement 'div'
       document.body.appendChild div
-      Jax.Controller.create "welcome",
+      Jax.views.push "welcome/index", ->
+      @controller = new class Controller extends Jax.Controller
+        views:
+          index: 'welcome/index'
         index: -> indexed = true
         mouse_clicked: -> clicked = true
-      Jax.views.push "welcome/index", -> 
       @context = new Jax.Context canvas: div, renderers: []
-      @context.redirectTo "welcome/index"
+      @context.redirect @controller
 
     it "should dispatch events properly", ->
       @context.mouse.trigger 'click'
@@ -109,64 +113,62 @@ describe 'Jax.Context', ->
       expect(@context.update).toHaveBeenCalled()
 
   it "should apply projection to new cameras if they don't have one", ->
-    @context.redirectTo new Jax.Controller() # controller required
+    @context.redirect new Jax.Controller() # controller required
     @context.render() # control
     @context.activeCamera = new Jax.Camera
     @context.render() # should setup projection
-    expect(@context.activeCamera.projection).toBeDefined()
+    expect(@context.activeCamera.get('projection').type).toEqual 'perspective'
+  
+  it "should not apply projection to new cameras if they already have one", ->
+    @context.redirect new Jax.Controller() # controller required
+    @context.render() # control
+    @context.activeCamera = new Jax.Camera
+    @context.activeCamera.ortho
+      left: -1
+      right: 1
+      bottom: -1
+      top: 1
+    @context.render() # should setup projection
+    expect(@context.activeCamera.get('projection').type).toEqual 'orthographic'
   
   it 'should find canvas by id', ->
     c = new Jax.Context @context.canvas.getAttribute 'id'
     expect(c.canvas).toBe @context.canvas
   
-  it 'should pass webgl options into the webgl canvas', ->
+  it 'should pass webgl options into the renderer', ->
     c = new Jax.Context document.createElement('canvas'),
       preserveDrawingBuffer: true
-    expect(c.renderer.context.getContextAttributes().preserveDrawingBuffer) \
-      .toBe true
-    c.dispose()
+    expect(c.renderer.options.preserveDrawingBuffer).toBe true
   
   describe "handling errors", ->
     context = error = null
     beforeEach ->
       error = shouldResume = null
-      Jax.Controller.create "test",
-        error: (err) -> error = err; shouldResume
-        index: ->
-        failNonFatally: ->
-          shouldResume = true
-          @raise()
-        failFatally: ->
-          shouldResume = null
-          @raise()
-        raise: ->
-          # raise a mock error, as a real one would fubar the test case
-          err = document.createEvent 'Events'
-          err.initEvent 'error', true, true
-          window.dispatchEvent err
+      @test = new class Test extends Jax.Controller
+        fail: -> throw new Error()
+        nofail: -> 
       context = new Jax.Context(document.createElement('canvas'))
-      context.redirectTo 'test'
-      
-    it "should pass error into handler", ->
-      context.controller.failNonFatally()
-      expect(error).not.toBeNull()
-      
-    it "should halt rendering if the handler returned false", ->
-      context.controller.failFatally()
+
+    it "should halt rendering", ->
+      expect(=> context.redirect @test, 'fail').toThrow()
       expect(context.isRendering()).toBeFalse()
       expect(context.isUpdating()).toBeFalse()
-    
-    it "should resume rendering if the handler returned true", ->
-      context.controller.failNonFatally()
+
+    it "should be rendering if no failure occurred", ->
+      expect(=> context.redirect @test, 'nofail').not.toThrow()
       expect(context.isRendering()).toBeTrue()
       expect(context.isUpdating()).toBeTrue()
     
   describe "redirecting", ->
     Two = null
     beforeEach ->
-      Jax.routes.clear()
-      One = Jax.Controller.create "one", index: ->
-      Two = Jax.Controller.create "two",
+      @one = new class One extends Jax.Controller
+        views:
+          index: 'one/index'
+        index: ->
+      @two = new class Two extends Jax.Controller
+        views:
+          index: 'two/index'
         index: -> @world.addObject new Jax.Model()
         second: ->
         update: (tc) ->
@@ -174,49 +176,50 @@ describe 'Jax.Context', ->
       Jax.views.push 'two/index', ->
         
     it 'should return the controller it redirected to', ->
-      result = @context.redirectTo 'two'
-      expect(result).toBeInstanceOf Two
+      result = @context.redirect @two
+      expect(result).toBe @two
         
     it 'should render views when it has them', ->
-      @context.redirectTo 'two/index'
+      @context.redirect @two
       spyOn @context.controller, 'view'
       jasmine.Clock.tick 1000
       expect(@context.controller.view).toHaveBeenCalled()
       
     it 'should make world accessible to views', ->
-      @context.redirectTo 'two/index'
+      @context.redirect @two
       expect(@context.controller.world).toBe @context.world
       
     it 'should make context accessible to views', ->
-      @context.redirectTo 'two/index'
+      @context.redirect @two
       expect(@context.controller.context).toBe @context
       
     describe 'scene unloading', ->
       it 'should reset the camera', ->
-        @context.redirectTo 'two'
-        @context.activeCamera.position = [1,1,1]
+        @context.redirect @two
+        @context.activeCamera.setPosition [1,1,1]
         @context.unloadScene()
-        expect(@context.activeCamera.position).toEqualVector [0,0,0]
+        expect(@context.activeCamera.get('position')).toEqualVector [0,0,0]
 
     describe 'to the index action in the same controller', ->
       it "should reload the scene as a special case", ->
         # normally redirection within the same controller won't unload
         # the scene, but a redirect to `index` indicates the scene should
         # be reloaded.
-        @context.redirectTo 'two'
+        @context.redirect @two
         controller = @context.controller
-        @context.redirectTo 'two'
-        expect(@context.controller).not.toBe controller
+        spyOn @context, 'unloadScene'
+        @context.redirect @two
+        expect(@context.unloadScene).toHaveBeenCalled()
           
     describe 'to a different action in the same controller', ->
       originalView = null
       beforeEach ->
-        @context.redirectTo 'two'
+        @context.redirect @two
         originalView = @context.controller.view
       
       describe 'without a view', ->
         beforeEach ->
-          @context.redirectTo 'two/second'
+          @context.redirect @two, 'second'
           
         it 'should not unload the world', ->
           expect(@context.world.getObjects()).not.toBeEmpty()
@@ -226,8 +229,9 @@ describe 'Jax.Context', ->
           
       describe 'with a view', ->
         beforeEach ->
+          @two.views.second = 'two/second'
           Jax.views.push 'two/second', ->
-          @context.redirectTo 'two/second'
+          @context.redirect @two, 'second'
           
         it "should use the new view", ->
           expect(@context.controller.view).not.toBe originalView
@@ -238,16 +242,16 @@ describe 'Jax.Context', ->
     describe "to a different controller", ->
       originalView = null
       beforeEach ->
-        @context.redirectTo 'one'
+        @context.redirect @one
         originalView = @context.controller.view
-        @context.redirectTo 'two'
+        @context.redirect @two
         
       it "should initialize the new view", ->
         expect(@context.controller.view).not.toBe originalView
         
       it "should dispose of the world", ->
         spyOn @context.world, 'dispose'
-        @context.redirectTo 'one'
+        @context.redirect @one
         expect(@context.world.dispose).toHaveBeenCalled()
         
       it "should reset the active camera", ->
@@ -255,23 +259,23 @@ describe 'Jax.Context', ->
         
     describe "to a bad route", ->
       it "should throw an error", ->
-        expect(=> @context.redirectTo 'invalid').toThrow "Route not recognized: 'invalid' (controller not found)"
+        expect(=> @context.redirect @one, 'invalid').toThrow "Action 'invalid' not found"
         
       it "should stop updating", ->
-        @context.redirectTo 'two'
+        @context.redirect @two
         spyOn @context.controller, 'update'
         try
-          @context.redirectTo 'invalid'
+          @context.redirect @two, 'invalid'
         catch e
           1 # no op
         jasmine.Clock.tick 1000
         expect(@context.controller.update).not.toHaveBeenCalled()
         
       it "should stop rendering", ->
-        @context.redirectTo 'one'
+        @context.redirect @one
         spyOn @context.world, 'render'
         try
-          @context.redirectTo 'invalid'
+          @context.redirect @one, 'invalid'
         catch e
           1 # no op
         jasmine.Clock.tick 1000
@@ -306,8 +310,9 @@ describe 'Jax.Context', ->
     
   describe 'at a controller with an update method', ->
     beforeEach ->
-      Jax.Controller.create 'test', update: (tc) ->
-      @context.redirectTo 'test'
+      test = new class Test extends Jax.Controller
+        update: (tc) ->
+      @context.redirect test
       
     it "should update its world", ->
       spyOn @context.world, 'update'
@@ -331,20 +336,20 @@ describe 'Jax.Context', ->
   describe "given a root controller", ->
     TestController = null
     beforeEach ->
-      TestController = Jax.Controller.create 'test', {}
-      @context = new Jax.Context @context.canvas, root: 'test'
+      class TestController extends Jax.Controller
+      @context = new Jax.Context @context.canvas, root: new TestController
       
     it "redirect there immediately", ->
       expect(@context.controller).toBeInstanceOf TestController
   
   describe "with a canvas and no options", ->
-    it "should initialize a WebGL renderer", ->
+    it "should initialize a renderer", ->
       context = new Jax.Context @context.canvas
-      expect(context.renderer).toBeInstanceOf Jax.Renderer.WebGL
+      expect(context.renderer).toBeDefined()
       
     it "should set perspective mode on the camera", ->
       context = new Jax.Context @context.canvas
-      expect(context.activeCamera.projection.type).toEqual 'perspective'
+      expect(context.activeCamera.get('projection').type).toEqual 'perspective'
     
   describe "with no arguments", ->
     it "should not initialize a renderer", ->
@@ -360,7 +365,7 @@ describe 'Jax.Context', ->
         
   describe "at a controller with every possible callback", ->
     beforeEach ->
-      Jax.Controller.create 'test',
+      @test = new class Test extends Jax.Controller
         mouse_clicked: (e) ->
         mouse_pressed: (e) ->
         mouse_released: (e) ->
@@ -373,7 +378,7 @@ describe 'Jax.Context', ->
         key_pressed: (e) ->
         key_released: (e) ->
         key_typed: (e) ->
-      @context.redirectTo 'test'
+      @context.redirect @test
 
     describe "after disposing the context", ->
       beforeEach -> @context.dispose()

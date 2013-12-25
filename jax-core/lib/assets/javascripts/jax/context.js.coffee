@@ -1,8 +1,9 @@
 #= require 'jax/core'
 #= require 'jax/renderer'
+#= require 'jax/mixins/event_emitter'
 
 class Jax.Context
-  @include Jax.EventEmitter
+  @include Jax.Mixins.EventEmitter
   
   constructor: (@canvas, options) ->
     # Normalize single-argument form
@@ -31,24 +32,6 @@ class Jax.Context
     @_renderStartTime = null
     @inputDevices = []
     
-    @_errorFunc = (error, url, line) =>
-      if @controller and @controller.error
-        result = @controller.error error, url, line
-      else if typeof(ApplicationController) isnt 'undefined' and \
-          ApplicationController.prototype.error
-        result = ApplicationController.prototype.error.apply \
-          (@controller || new ApplicationController()), arguments
-
-      if result is true
-        # non-fatal, restart rendering and updating
-        @restart()
-        error.preventDefault?()
-        false
-      else
-        @stopRendering()
-        @stopUpdating()
-        true
-    
     @_renderFunc = (time) =>
       # deal with time in seconds, not ms
       time *= 0.001
@@ -63,8 +46,6 @@ class Jax.Context
       @render()
       if @isRendering() then @requestRenderFrame()
       
-    $(window).on 'error', @_errorFunc
-
     @id = Jax.guid()
     @world = new Jax.World this
     @uptime = 0
@@ -75,7 +56,7 @@ class Jax.Context
     @setupCamera()
     @setupInputDevices options.focus
     @startUpdating()
-    @redirectTo options.root if options.root
+    @redirect options.root if options.root
     
   @getter 'player', ->
     console.log new Error("Jax.Context#player is deprecated; it only contained `camera`, " + \
@@ -101,15 +82,15 @@ class Jax.Context
     camera = @activeCamera
     @matrix_stack.reset() # reset depth
     @matrix_stack.loadModelMatrix mat4.IDENTITY
-    # we use the inverse xform to go from WORLD to LOCAL instead of the opposite.
-    @matrix_stack.loadViewMatrix camera.getInverseTransformationMatrix()
-    @matrix_stack.loadProjectionMatrix camera.getProjectionMatrix()
+    @matrix_stack.loadViewMatrix camera.get('inverseMatrix')
+    @matrix_stack.loadProjectionMatrix camera.get('projection').matrix
     @matrix_stack
   
   update: (timechange) ->
     device.update timechange for device in @inputDevices
     @controller?.update? timechange
     @world.update timechange
+    @activeCamera.update timechange
 
   ###
   Returns true if the active camera has no projection (e.g. neither
@@ -118,7 +99,7 @@ class Jax.Context
   ###
   isViewportStale: ->
     camera = @activeCamera
-    return true unless camera.projection
+    return true if camera.get('projection').type is 'identity'
     return true if @_realViewportWidth  isnt @canvas.clientWidth
     return true if @_realViewportHeight isnt @canvas.clientHeight
     false
@@ -142,6 +123,7 @@ class Jax.Context
   getTimePassed: ->
     uptime = @uptime
     timechange = uptime - @_lastUptime
+    timechange = 0 if timechange < 0
 
     if clampValue = @clampTimechange
       Math.min timechange, clampValue
@@ -235,24 +217,19 @@ class Jax.Context
         @[device.alias] = device if device.alias
         @inputDevices.push device
     
-  redirectTo: (path) ->
+  redirect: (controller, action = 'index') ->
     @unregisterListeners()
     @stopUpdating()
     @stopRendering()
-    
-    if path instanceof Jax.Controller
+
+    if typeof controller is 'string'
+      [controller, action] = [@controller, controller]
+
+    if controller isnt @controller or action is 'index'
       @unloadScene()
-      @controller = path
-      @controller.fireAction 'index', this
-    else
-      descriptor = Jax.routes.recognizeRoute path
-      if descriptor.action != 'index' && @controller && @controller instanceof descriptor.controller
-        # already within the routed controller, just redirect to a different
-        # view, or fire an action and stay with the same view
-        @controller.fireAction descriptor.action, this
-      else
-        @unloadScene()
-        @controller = Jax.routes.dispatch path, this
+
+    @controller = controller
+    controller.fireAction action, this
     
     @registerListeners()
     @startRendering()
@@ -268,12 +245,13 @@ class Jax.Context
     
   setupCamera: ->
     if @world and @canvas
+      @_realViewportWidth  = @canvas.clientWidth
+      @_realViewportHeight = @canvas.clientHeight
       @activeCamera.perspective
         width:  @canvas.clientWidth  || @canvas.width  || 320
         height: @canvas.clientHeight || @canvas.height || 200
     
   dispose: ->
-    $(window).off 'error', @_errorFunc
     @stopUpdating()
     @stopRendering()
     @world.dispose()

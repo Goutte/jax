@@ -1,6 +1,8 @@
 # Very simply dumps out a noise texture that should look bumpy and/or cloudy.
 # If it doesn't, noise ain't workin'.
-Jax.Controller.create "noise",
+class Noise extends Jax.Controller
+  Jax.controllers.add @name, this
+
   index: ->
     class Jax.Material.Layer.T extends Jax.Material.Layer
       @shaderSource:
@@ -23,4 +25,4 @@ Jax.Controller.create "noise",
     @world.addObject new Jax.Model 
       position: [0, 0, -3]
       mesh: tpmesh
-      update: (tc) -> @camera.rotate tc * 0.25, 1, 0.75, 0.5
+      update: (tc) -> @camera.rotate tc * 0.25, [1, 0.75, 0.5]

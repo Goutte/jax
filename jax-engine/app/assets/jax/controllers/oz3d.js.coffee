@@ -1,7 +1,9 @@
 movement = { forward: 0, backward: 0, left: 0, right: 0 }
 radius = Math.sqrt 15*15 + 25*25
 
-Jax.Controller.create "oz3d",
+class OZ3D extends Jax.Controller
+  Jax.controllers.add @name, this
+
   update: (timechange) ->
     speed = 0.15 * timechange;
     @_rotation = (@_rotation or 0) - speed
@@ -9,17 +11,17 @@ Jax.Controller.create "oz3d",
     pos[0] = Math.sin(@_rotation) * radius
     pos[1] = 20
     pos[2] = Math.cos(@_rotation) * radius
-    @context.activeCamera.position = pos
-    @context.activeCamera.lookAt [0, 4.5, 0]
+    @context.activeCamera.lookAt pos, [0, 4.5, 0], [0, 1, 0]
 
   mouse_scrolled: (e) ->
     radius += e.wheelDeltaY * 0.25
     radius = 0.25 if radius < 0.25
     
   mouse_dragged: (e) ->
-    @light.camera.move e.diffy / 100, [0, 1, 0]
-    @light.camera.move e.diffx / 100, [0, 0, 1]
-    @lighto.camera.position = @light.camera.position unless @light instanceof Jax.Light.Directional
+    @light.camera.translate [0, -e.diffy / 100, 0]
+    @light.camera.translate [e.diffx / 100, 0, 0]
+    unless @light instanceof Jax.Light.Directional
+      @lighto.camera.setPosition @light.camera.get('position')
     
   key_released: (e) ->
     @world.removeLight @light
@@ -54,12 +56,9 @@ Jax.Controller.create "oz3d",
       receiveShadow: false
       illuminated: false
       mesh: new Jax.Mesh.Sphere(radius: 0.2, material: @light_mat)
-    @lighto.camera.lookAt [0,0,-3]
-    @lightOptions.direction = @lighto.camera.direction
+    @lighto.camera.lookAt [0, 15, 10], [0,0,-3], [0, 1, 0]
+    @lightOptions.direction = @lighto.camera.get('direction')
     @light = @world.addLight new Jax.Light.Directional @lightOptions
-    
-    @context.activeCamera.position = [-15, 20, 25]
-    @context.activeCamera.direction = [ 0.55, -0.5, -1]
     
     @floor_mat = new Jax.Material.Surface
       shininess: 60

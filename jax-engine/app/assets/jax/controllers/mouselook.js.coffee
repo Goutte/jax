@@ -4,7 +4,9 @@ movement =
   left: 0
   right: 0
 
-Jax.Controller.create "mouselook",
+class MouseLook extends Jax.Controller
+  Jax.controllers.add @name, this
+
   index: ->
     @world.addLight new Jax.Light.Directional
       direction: [1, -0.1, -1]
@@ -20,7 +22,7 @@ Jax.Controller.create "mouselook",
       position: [0, -9, 0]
 
   mouse_dragged: (evt) ->
-    @activeCamera.rotate 1/100, -evt.diffy, -evt.diffx, 0
+    @activeCamera.rotate 1/100, [-evt.diffy, -evt.diffx, 0]
 
   key_pressed: (event) ->
     switch event.keyCode

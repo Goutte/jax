@@ -12,9 +12,12 @@ Pull in `Jax.Context`, which is the fundamental interface
 for using Jax.
 #= require "jax/context"
 
+#= require "jax/texture"
+
 Load renderers. Jax will try to use renderers in the order they
 appear here.
 #= require "jax/renderers/webgl"
+#= require "jax/renderers/headless"
 
 Support for input devices. Don't bother loading this
 if your scene does not process input from the user,

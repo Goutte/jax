@@ -1,4 +1,6 @@
-Jax.Controller.create "picking",
+class Picking extends Jax.Controller
+  Jax.controllers.add @name, this
+
   update: (tc) ->
     objs = @world.getObjects()
     @clock or= 0
@@ -10,7 +12,7 @@ Jax.Controller.create "picking",
       pos[1] = Math.sin(@clock + i)
       pos[2] = Math.sin(@clock + i)
       i += Math.PI
-      obj.camera.position = pos
+      obj.camera.setPosition pos
       obj.mesh.setColor '#fff'
     if @picked = @world.pick @mouse.x, @mouse.y
       @picked.mesh.setColor '#f00'
@@ -37,8 +39,7 @@ Jax.Controller.create "picking",
       y: -1
 
     @world.ambientColor = '#fff'
-    @activeCamera.position = [4, 4, 4]
-    @activeCamera.lookAt [ 0, 0, 0 ]
+    @activeCamera.lookAt [4, 4, 4], [0, 0, 0], [0, 1, 0]
     
     @world.addLight new Jax.Light.Directional
       shadows: false

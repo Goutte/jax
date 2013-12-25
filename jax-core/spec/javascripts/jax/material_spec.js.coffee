@@ -6,12 +6,14 @@ describe "Jax.Material", ->
     Jax.guid = guid
     delete Jax.Material.Layer.TestLayer
   
-  describe "with an instance layer with un-shared properties", ->
+  describe "with a layer with un-shared properties", ->
     TestMat = null
     beforeEach ->
       spyOn(Jax, 'guid').andReturn 0
       class Jax.Material.Layer.TestLayer extends Jax.Material.Layer
-        @shaderSource: { fragment: 'uniform float time; void main(void) { float x = time; }' }
+        getShaderSource: ->
+          fragment: 'uniform float time; void main(void) { float x = time; }'
+          vertex: ''
         setVariables: (c, m, o, v, p) -> v.time = 1.5
       TestMat = class TestMat extends Jax.Material
         constructor: -> super(); @addLayer type: 'TestLayer'
@@ -21,38 +23,8 @@ describe "Jax.Material", ->
         
     it 'should set the property appropriately', ->
       mat = new TestMat()
-      mat.render(@context, new Jax.Mesh.Quad, new Jax.Model)
-      expect(mat.assigns["time0"]).toEqual 1.5
-  
-  describe "with class-wide layers", ->
-    TestMat = null
-    beforeEach ->
-      fakeGUID = 0
-      spyOn(Jax, 'guid').andCallFake -> fakeGUID++
-      TestMat = class TestMat extends Jax.Material
-        @addLayer type: "Position"
-    
-    it "should share shaders between instances", ->
-      expect(new TestMat().shader).toBe new TestMat().shader
-      
-    it "should not taint Jax.Material", ->
-      expect(Jax.Material.getLayers()).toBeEmpty()
-      
-    it "should not add layers more than once", ->
-      expect(new TestMat().layers.length).toEqual 1
-      expect(new TestMat().layers.length).toEqual 1
-      
-    describe "after localization", ->
-      mat = null
-      beforeEach ->
-        mat = new TestMat()
-        mat.localizeShader()
-      
-      it 'should allow layers to be added', ->
-        str = mat.shader.fragment.toString()
-        mat.addLayer type: 'VertexColor'
-        mat.addLayer type: 'VertexColor'
-        expect(mat.shader.fragment.toString()).not.toEqual str
+      mat.render(@context, mesh = new Jax.Mesh.Quad, new Jax.Model)
+      expect(mesh.assigns["time0"]).toEqual 1.5
   
   it "should not reuse attribute arrays from different objects", ->
     # when for example obj A binds its normals, but obj B does not,
@@ -67,8 +39,9 @@ describe "Jax.Material", ->
       setVariables: (context, mesh, model, vars, pass) ->
         if model is obj1 then mesh.data.set vars, normals: 'NORMAL'
         mesh.data.set vars, vertices: 'VERT'
-    }, matr
+    }
 
+    matr.prepareShader()
     normalVariable = matr.shader.variables.attributes['NORMAL']
 
     obj1.render SPEC_CONTEXT, matr
@@ -87,8 +60,8 @@ describe "Jax.Material", ->
       class Jax.Material.Layer.TestLayer2 extends Jax.Material.Layer
         numPasses: -> 4
       matr = new Jax.Material
-      matr.addLayer layer1 = new Jax.Material.Layer.TestLayer1 {}, matr
-      matr.addLayer layer2 = new Jax.Material.Layer.TestLayer2 {}, matr
+      matr.addLayer layer1 = new Jax.Material.Layer.TestLayer1 {}
+      matr.addLayer layer2 = new Jax.Material.Layer.TestLayer2 {}
       
     it "should render in the expected order", ->
       layer1.setVariables = (context, mesh, model, vars, pass) -> layer1_order.push pass
@@ -101,7 +74,7 @@ describe "Jax.Material", ->
     class Jax.Material.Layer.TestLayer extends Jax.Material.Layer
       setVariables: (context, mesh, model, vars, pass) -> return false
     matr = new Jax.Material
-    matr.addLayer new Jax.Material.Layer.TestLayer {}, matr
+    matr.addLayer new Jax.Material.Layer.TestLayer {}
     spyOn matr, 'drawBuffers'
     matr.render SPEC_CONTEXT, new Jax.Mesh.Triangles, new Jax.Model
     expect(matr.drawBuffers).not.toHaveBeenCalled()
@@ -110,7 +83,7 @@ describe "Jax.Material", ->
     class Jax.Material.Layer.TestLayer extends Jax.Material.Layer
       setVariables: (context, mesh, model, vars, pass) -> return undefined
     matr = new Jax.Material
-    matr.addLayer new Jax.Material.Layer.TestLayer {}, matr
+    matr.addLayer new Jax.Material.Layer.TestLayer {}
     spyOn matr, 'drawBuffers'
     matr.render SPEC_CONTEXT, new Jax.Mesh.Triangles, new Jax.Model
     expect(matr.drawBuffers).toHaveBeenCalled()
@@ -119,7 +92,7 @@ describe "Jax.Material", ->
     class Jax.Material.Layer.TestLayer extends Jax.Material.Layer
       setVariables: (context, mesh, model, vars, pass) -> return null
     matr = new Jax.Material
-    matr.addLayer new Jax.Material.Layer.TestLayer {}, matr
+    matr.addLayer new Jax.Material.Layer.TestLayer {}
     spyOn matr, 'drawBuffers'
     matr.render SPEC_CONTEXT, new Jax.Mesh.Triangles, new Jax.Model
     expect(matr.drawBuffers).toHaveBeenCalled()
@@ -127,7 +100,7 @@ describe "Jax.Material", ->
   it "should not skip passes where setVariables is not defined", ->
     class Jax.Material.Layer.TestLayer extends Jax.Material.Layer
     matr = new Jax.Material
-    matr.addLayer new Jax.Material.Layer.TestLayer {}, matr
+    matr.addLayer new Jax.Material.Layer.TestLayer {}
     spyOn matr, 'drawBuffers'
     matr.render SPEC_CONTEXT, new Jax.Mesh.Triangles, new Jax.Model
     expect(matr.drawBuffers).toHaveBeenCalled()
@@ -165,15 +138,17 @@ describe "Jax.Material", ->
     describe "adding a layer", ->
       beforeEach ->
         class Jax.Material.Layer.TestLayer extends Jax.Material.Layer
-          @shaderSource:
-            common: "// common"
+          getShaderSource: ->
             vertex: "// vertex"
             fragment: "// fragment"
         matr.addLayer type: "TestLayer"
+        # shader is not built until something is rendered
+        matr.renderMesh @context, new Jax.Mesh.Quad(), new Jax.Model()
       afterEach -> delete Jax.Material.Layer.TestLayer
         
-      it "should add the common code to the vertex shader", ->
-        expect(matr.vertex.toString()).toMatch /common/
+      # common code is now prepended calculated by getShaderSource() itself
+      # it "should add the common code to the vertex shader", ->
+      #   expect(matr.vertex.toString()).toMatch /common/
 
       it "should add the vertex code to the vertex shader", ->
         expect(matr.vertex.toString()).toMatch /vertex/
@@ -181,8 +156,8 @@ describe "Jax.Material", ->
       it "should not add the fragment code to the vertex shader", ->
         expect(matr.vertex.toString()).not.toMatch /fragment/
 
-      it "should add the common code to the fragment shader", ->
-        expect(matr.fragment.toString()).toMatch /common/
+      # it "should add the common code to the fragment shader", ->
+      #   expect(matr.fragment.toString()).toMatch /common/
 
       it "should not add the vertex code to the fragment shader", ->
         expect(matr.fragment.toString()).not.toMatch /vertex/
@@ -197,6 +172,7 @@ describe "Jax.Material", ->
         expect(Jax.Material.Layer.TestLayer.prototype.setup).toHaveBeenCalled()
       
       it "should bind the shader", ->
+        matr.prepareShader()
         spyOn matr.shader, 'bind'
         matr.render SPEC_CONTEXT, new Jax.Mesh.Triangles(), new Jax.Model()
         expect(matr.shader.bind).toHaveBeenCalled()
@@ -204,6 +180,9 @@ describe "Jax.Material", ->
 
   describe "class method", ->
     describe "find", ->
+      # silence warnings
+      beforeEach -> spyOn console, 'log'
+
       afterEach ->
         # Jax.Material.clearResources()
         delete Jax.Material.T

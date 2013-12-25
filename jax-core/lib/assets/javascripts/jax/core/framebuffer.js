@@ -5,11 +5,11 @@
  **/
 Jax.Framebuffer = (function() {
   function build(context, self) {
-    var handle = context.gl.createFramebuffer();
+    var handle = context.renderer.createFramebuffer();
     var width = self.options.width, height = self.options.height;
 
     self.setHandle(context, handle);
-    context.gl.bindFramebuffer(GL_FRAMEBUFFER, handle);
+    context.renderer.bindFramebuffer(GL_FRAMEBUFFER, handle);
     
     /*
     Depth textures are better handled in Jax.Texture, and have the benefit
@@ -22,54 +22,54 @@ Jax.Framebuffer = (function() {
     for when depth textures are properly implemented as e.g. Jax.DepthTexture.
     This will probably happen circa Jax v3.1.
 
-    if (self.extension = context.gl.getExtension('WEBKIT_WEBGL_depth_texture') ||
-                         context.gl.getExtension('MOZ_WEBGL_depth_texture') ||
-                         context.gl.getExtension('WEBGL_depth_texture')) {
+    if (self.extension = context.renderer.getExtension('WEBKIT_WEBGL_depth_texture') ||
+                         context.renderer.getExtension('MOZ_WEBGL_depth_texture') ||
+                         context.renderer.getExtension('WEBGL_depth_texture')) {
       if (self.options.depth) {
-        self.depthTexture = context.gl.createTexture();
-        context.gl.bindTexture(GL_TEXTURE_2D, self.depthTexture);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        context.gl.texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.options.width, self.options.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, null);
+        self.depthTexture = context.renderer.createTexture();
+        context.renderer.bindTexture(GL_TEXTURE_2D, self.depthTexture);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        context.renderer.texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.options.width, self.options.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, null);
       }
       if (self.options.stencil) {
-        self.stencilTexture = context.gl.createTexture();
-        context.gl.bindTexture(GL_TEXTURE_2D, self.stencilTexture);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        context.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        context.gl.texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.options.width, self.options.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, null);
+        self.stencilTexture = context.renderer.createTexture();
+        context.renderer.bindTexture(GL_TEXTURE_2D, self.stencilTexture);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        context.renderer.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        context.renderer.texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.options.width, self.options.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, null);
       }
     } else {
     */
       // depth and stencil attachment
       if (self.options.depth && self.options.stencil) {
-        handle.depthstencilbuffer = context.gl.createRenderbuffer();
-        context.gl.bindRenderbuffer(GL_RENDERBUFFER, handle.depthstencilbuffer);
-        context.gl.renderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, width, height);
-        context.gl.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, handle.depthstencilbuffer);
-        context.gl.bindRenderbuffer(GL_RENDERBUFFER, null);
+        handle.depthstencilbuffer = context.renderer.createRenderbuffer();
+        context.renderer.bindRenderbuffer(GL_RENDERBUFFER, handle.depthstencilbuffer);
+        context.renderer.renderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, width, height);
+        context.renderer.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, handle.depthstencilbuffer);
+        context.renderer.bindRenderbuffer(GL_RENDERBUFFER, null);
       }
     
       // depth attachment
       if (self.options.depth && !self.options.stencil) {
-        handle.depthbuffer = context.gl.createRenderbuffer();
-        context.gl.bindRenderbuffer(GL_RENDERBUFFER, handle.depthbuffer);
-        context.gl.renderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-        context.gl.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, handle.depthbuffer);
-        context.gl.bindRenderbuffer(GL_RENDERBUFFER, null);
+        handle.depthbuffer = context.renderer.createRenderbuffer();
+        context.renderer.bindRenderbuffer(GL_RENDERBUFFER, handle.depthbuffer);
+        context.renderer.renderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+        context.renderer.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, handle.depthbuffer);
+        context.renderer.bindRenderbuffer(GL_RENDERBUFFER, null);
       }
     
       // stencil attachment
       if (self.options.stencil && !self.options.depth) {
-        handle.stencilbuffer = context.gl.createRenderbuffer();
-        context.gl.bindRenderbuffer(GL_RENDERBUFFER, handle.stencilbuffer);
-        context.gl.renderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
-        context.gl.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, handle.stencilbuffer);
-        context.gl.bindRenderbuffer(GL_RENDERBUFFER, null);
+        handle.stencilbuffer = context.renderer.createRenderbuffer();
+        context.renderer.bindRenderbuffer(GL_RENDERBUFFER, handle.stencilbuffer);
+        context.renderer.renderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
+        context.renderer.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, handle.stencilbuffer);
+        context.renderer.bindRenderbuffer(GL_RENDERBUFFER, null);
       }
     // }
     
@@ -99,10 +99,14 @@ Jax.Framebuffer = (function() {
         handle.textures[i] = new Jax.Texture(texture_options);
       }
       
-      if (handle.textures[i].getTarget() == GL_TEXTURE_2D)
-        context.gl.framebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, handle.textures[i].getHandle(context), 0);
+      if (handle.textures[i].get('target') == GL_TEXTURE_2D) {
+        var handle;
+        if (handle = handle.textures[i].validate(context))
+          context.renderer.framebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D,
+                  handle, 0);
+      }
       else
-        context.gl.framebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+        context.renderer.framebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X,
                 handle.textures[i].getHandle(context), 0);
       
       attachment++;
@@ -118,7 +122,7 @@ Jax.Framebuffer = (function() {
   }
   
   function checkStatus(context, self) {
-    var status = context.gl.checkFramebufferStatus(GL_FRAMEBUFFER);
+    var status = context.renderer.checkFramebufferStatus(GL_FRAMEBUFFER);
     self.unbind(context);
     switch(status) {
       case GL_FRAMEBUFFER_COMPLETE:
@@ -141,14 +145,70 @@ Jax.Framebuffer = (function() {
         throw new Error("Jax.Framebuffer: make sure the framebuffer has at least 1 texture attachment. (GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER)");
       default:
         var which;
-        for (which in context.gl)
-          if (context.gl[which] == status)
+        for (which in context.renderer)
+          if (context.renderer[which] == status)
             throw new Error("Jax.Framebuffer: an unknown error occurred. ("+status+" - "+which+")");
         throw new Error("Jax.Framebuffer: an unknown error occurred. ("+status+")");
     }
   }
-  
-  return Jax.Class.create({
+
+  /**
+   * new Jax.Framebuffer([options])
+   * - options (Object): a generic object containing the following optional properties:
+   * 
+   *   * colors: an array of color formats such as GL_RGBA, GL_RGB, etc. The _colors_ array may
+   *             be empty if no color attachments are needed. Defaults to [GL_RGBA] unless _color_
+   *             is specified.
+   *             
+   *             Alternatively, an options object can be used. This object will be passed into
+   *             Jax.Texture(). Or, the object may be an actual instance of Jax.Texture, which
+   *             will be used directly.
+   *             
+   *   * color: optionally, in place of a colors array, a single color format as above. If both
+   *            _color_ and _colors_ are specified, _color_ is simply added to the _colors_ array.
+   *   * depth: true if a depth attachment is required, false otherwise. Defaults to false.
+   *   * stencil: true if a stencil attachment is required, false otherwise. Defaults to false.
+   *   * width: the width of the render and color buffers. All render and color buffers for a given
+   *            framebuffer must have the same width. Defaults to 512.
+   *   * height: the height of the render and color buffers. All render and color buffers for a given
+   *             framebuffer must have the same height. Defaults to 512.
+   *
+   * The following options may also be present. If they are, they will be passed into Jax.Texture:
+   * 
+   *   * data_type: defaults to GL_UNSIGNED_BYTE
+   *   * min_filter: defaults to GL_LINEAR
+   *   * mag_filter: defaults to GL_LINEAR
+   *   * wrap_s: defaults to GL_CLAMP_TO_EDGE
+   *   * wrap_t: defaults to GL_CLAMP_TO_EDGE
+   *   * generate_mipmap: defaults to false
+   *     
+   **/
+  function Framebuffer(options) {
+    var defaults = {
+      depth: false,
+      stencil: false,
+      width:512,
+      height:512,
+      data_type: GL_UNSIGNED_BYTE,
+      min_filter: GL_LINEAR,
+      mag_filter: GL_LINEAR,
+      wrap_s: GL_CLAMP_TO_EDGE,
+      wrap_t: GL_CLAMP_TO_EDGE,
+      generate_mipmap: false
+    };
+    if (!(options && (options.color || options.colors))) defaults.colors = [GL_RGBA];
+    
+    this.handles = {};
+    this.options = options = Jax.Util.merge(options, defaults);
+    if (options.color != undefined) {
+      if (options.colors != undefined) options.colors.push(options.color);
+      else options.colors = [options.color];
+      delete options.color;
+    }
+  }
+
+
+  jQuery.extend(Framebuffer.prototype, {
     dispose: function(context) {
       if (!this.handles) return;
       
@@ -157,15 +217,15 @@ Jax.Framebuffer = (function() {
       
       // handle.stencilbuffer, handle.depthbuffer, handle.depthstencilbuffer
       if (handle.stencilbuffer) {
-        context.gl.deleteRenderbuffer(handle.stencilbuffer);
+        context.renderer.deleteRenderbuffer(handle.stencilbuffer);
         delete handle.stencilbuffer;
       }
       if (handle.depthbuffer) {
-        context.gl.deleteRenderbuffer(handle.depthbuffer);
+        context.renderer.deleteRenderbuffer(handle.depthbuffer);
         delete handle.depthbuffer;
       }
       if (handle.depthstencilbuffer) {
-        context.gl.deleteRenderbuffer(handle.depthstencilbuffer);
+        context.renderer.deleteRenderbuffer(handle.depthstencilbuffer);
         delete handle.depthstencilbuffer;
       }
       
@@ -179,65 +239,10 @@ Jax.Framebuffer = (function() {
       }
       
       // finally, delete the framebuffer itself
-      context.gl.deleteFramebuffer(handle);
+      context.renderer.deleteFramebuffer(handle);
       this.setHandle(context, null);
     },
     
-    /**
-     * new Jax.Framebuffer([options])
-     * - options (Object): a generic object containing the following optional properties:
-     * 
-     *   * colors: an array of color formats such as GL_RGBA, GL_RGB, etc. The _colors_ array may
-     *             be empty if no color attachments are needed. Defaults to [GL_RGBA] unless _color_
-     *             is specified.
-     *             
-     *             Alternatively, an options object can be used. This object will be passed into
-     *             Jax.Texture(). Or, the object may be an actual instance of Jax.Texture, which
-     *             will be used directly.
-     *             
-     *   * color: optionally, in place of a colors array, a single color format as above. If both
-     *            _color_ and _colors_ are specified, _color_ is simply added to the _colors_ array.
-     *   * depth: true if a depth attachment is required, false otherwise. Defaults to false.
-     *   * stencil: true if a stencil attachment is required, false otherwise. Defaults to false.
-     *   * width: the width of the render and color buffers. All render and color buffers for a given
-     *            framebuffer must have the same width. Defaults to 512.
-     *   * height: the height of the render and color buffers. All render and color buffers for a given
-     *             framebuffer must have the same height. Defaults to 512.
-     *
-     * The following options may also be present. If they are, they will be passed into Jax.Texture:
-     * 
-     *   * data_type: defaults to GL_UNSIGNED_BYTE
-     *   * min_filter: defaults to GL_LINEAR
-     *   * mag_filter: defaults to GL_LINEAR
-     *   * wrap_s: defaults to GL_CLAMP_TO_EDGE
-     *   * wrap_t: defaults to GL_CLAMP_TO_EDGE
-     *   * generate_mipmap: defaults to false
-     *     
-     **/
-    initialize: function(options) {
-      var defaults = {
-        depth: false,
-        stencil: false,
-        width:512,
-        height:512,
-        data_type: GL_UNSIGNED_BYTE,
-        min_filter: GL_LINEAR,
-        mag_filter: GL_LINEAR,
-        wrap_s: GL_CLAMP_TO_EDGE,
-        wrap_t: GL_CLAMP_TO_EDGE,
-        generate_mipmap: false
-      };
-      if (!(options && (options.color || options.colors))) defaults.colors = [GL_RGBA];
-      
-      this.handles = {};
-      this.options = options = Jax.Util.merge(options, defaults);
-      if (options.color != undefined) {
-        if (options.colors != undefined) options.colors.push(options.color);
-        else options.colors = [options.color];
-        delete options.color;
-      }
-    },
-
     /**
      * Jax.Framebuffer#bindCubeFace(context, texIndex, faceEnum[, callback]) -> Jax.Framebuffer
      * - context (Jax.Context): a Jax context
@@ -271,7 +276,7 @@ Jax.Framebuffer = (function() {
         throw new Error("Texture at index "+texIndex+" is not a cube map!");
       
       this.bind(context);
-      context.gl.framebufferTexture2D(GL_FRAMEBUFFER, window['GL_COLOR_ATTACHMENT'+texIndex],
+      context.renderer.framebufferTexture2D(GL_FRAMEBUFFER, window['GL_COLOR_ATTACHMENT'+texIndex],
               faceEnum, texture.getHandle(context), 0);
       
       if (callback) {
@@ -296,7 +301,7 @@ Jax.Framebuffer = (function() {
      **/
     bind: function(context, callback) {
       this.validate(context);
-      context.gl.bindFramebuffer(GL_FRAMEBUFFER, this.getHandle(context));
+      context.renderer.bindFramebuffer(GL_FRAMEBUFFER, this.getHandle(context));
       
       if (callback) {
         callback.call(this);
@@ -341,7 +346,7 @@ Jax.Framebuffer = (function() {
      * unnecessary if Jax.Framebuffer#bind() was called with a callback.
      **/
     unbind: function(context) {            
-      context.gl.bindFramebuffer(GL_FRAMEBUFFER, null);
+      context.renderer.bindFramebuffer(GL_FRAMEBUFFER, null);
       return this;
     },
     
@@ -354,7 +359,7 @@ Jax.Framebuffer = (function() {
      *
      **/
     viewport: function(context) {
-      context.gl.viewport(0,0,this.options.width,this.options.height);
+      context.renderer.viewport(0,0,this.options.width,this.options.height);
       return this;
     },
     
@@ -428,4 +433,6 @@ Jax.Framebuffer = (function() {
       return this;
     }
   });
+
+  return Framebuffer;
 })();

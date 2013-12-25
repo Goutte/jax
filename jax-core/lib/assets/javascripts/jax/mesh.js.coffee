@@ -1,14 +1,15 @@
 #= require 'jax/core/coffee_patterns'
 #= require 'jax/color'
-#= require 'jax/core/event_emitter'
 #= require 'jax/core/buffer'
+#= require 'jax/mixins/event_emitter'
 #= require_self
 #= require_tree './mesh'
 
 class Mesh
-  @include Jax.EventEmitter
+  @include Jax.Mixins.EventEmitter
   
   constructor: (options) ->
+    @assigns = {}
     @_valid = false
     @data = new Jax.Mesh.Data
     @_bounds = new Jax.Mesh.Bounds

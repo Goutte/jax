@@ -1,5 +1,7 @@
 # Screen space ambient occlusion test
-Jax.Controller.create "ssao",
+class SSAO extends Jax.Controller
+  Jax.controllers.add @name, this
+
   index: ->
     @world.ambientColor = '#fff'
     
@@ -33,5 +35,5 @@ Jax.Controller.create "ssao",
       position: [0, -1, 0]
       direction: [0, -1, 0]
 
-    @activeCamera.lookAt [0,0,0], [10, 10, 10]
+    @activeCamera.lookAt [10, 10, 10], [0,0,0], [0,1,0]
     

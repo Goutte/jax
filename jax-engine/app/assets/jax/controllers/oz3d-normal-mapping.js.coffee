@@ -1,4 +1,6 @@
-Jax.Controller.create "oz3d-normal",
+class OZ3DNormal extends Jax.Controller
+  Jax.controllers.add @name, this
+
   update: (tc) ->
     @rot = (@rot or= 0) + tc
     @obj.camera.yaw tc * 0.1
@@ -24,8 +26,8 @@ Jax.Controller.create "oz3d-normal",
     console.log "  When enabled, the mortar between bricks should have 0 specular."
     
     # @activeCamera.position = [0, 0, 100]
-    @activeCamera.position = [32, -13.52, 55.4]
-    @activeCamera.direction = [-0.65, 0.2, -0.73]
+    @activeCamera.setPosition [32, -13.52, 55.4]
+    @activeCamera.setDirection [-0.65, 0.2, -0.73]
     
     lightPos = [10, -10, 45]
     @light = @world.addLight new Jax.Light.Point
@@ -57,14 +59,10 @@ Jax.Controller.create "oz3d-normal",
         specular:[1, 0.9, 0.9, 1]
       # textures:  [ {
       #   path: '/textures/oz3d_color_map.jpg'
-      #   min_filter: GL_NEAREST
-      #   mag_filter: GL_NEAREST
       #   scale: 4
       # } ]
       normalMaps: [ {
         path: '/textures/oz3d_normal_and_specular_map.png'
-        min_filter: GL_NEAREST
-        mag_filter: GL_NEAREST
         specularChannel: true
         scale: 4
       } ]
@@ -76,4 +74,4 @@ Jax.Controller.create "oz3d-normal",
         stacks: 20
         radius: 40
       position: [0, 0, 0]
-    model.camera.pitch Math.PI / 2
+    model.camera.yaw Math.PI / 2
