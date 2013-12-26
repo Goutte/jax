@@ -481,8 +481,8 @@ class Jax.Camera
   these are points on the near and far planes, respectively.
   ###
   unprojectLineSegment: (out, winx, winy, winzNear = 0, winzFar = 1) ->
-    @unproject out[0], winx, winy, winzNear
-    @unproject out[1], winx, winy, winzFar
+    @unprojectPoint out[0], winx, winy, winzNear
+    @unprojectPoint out[1], winx, winy, winzFar
     out
 
   ###
